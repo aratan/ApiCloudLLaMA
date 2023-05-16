@@ -47,12 +47,24 @@ Usage
         
         ```shell
         curl host:8080/llama?phrase="hola"
+        
+        {
+           "output":"1684253956720900396"
+        } 
         ```
         
 2.  You can check the result of a specific job using its jobID. For example:
     
     ```shell
-    curl http://localhost:8080/result?jobID=1684234007692666387
+    curl http://localhost:8080/result?jobID=1684253956720900396
+    
+    {
+      "jobID":"1684253956720900396",
+      "content":" hola, amigo!\n¿Cómo estás? ¿Has estado muy cansado últimamente?",
+      "exists":true,
+      "date":"2023-05-16T18:22:19.179872455+02:00",
+      "ip":"192.168.1.42:33638"
+    }
     ```
     
 
