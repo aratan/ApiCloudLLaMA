@@ -1,3 +1,4 @@
+
 Project (Api Cloud LLaMA)
 ============
 
@@ -5,6 +6,9 @@ Description
 -----------
 
 This project, ApiCloudLLaMA, aims to create an API that can be easily consumed by developers in their applications. Similar to the modular concept of click-in shields in Arduino, our goal is to provide an API with open-source models, like GPT4, to democratize their usage.
+
+<img src="https://th.bing.com/th/id/OIG.mdR6q5sRWVj2WDWk7THM?pid=ImgGn" width="200" height="200" >
+
 
 Installation
 ------------
