@@ -1,20 +1,72 @@
-# ApiCloudLLaMA
-The idea is to make an api that everyone can consume in their GPT4-like applications but with free models, to democratize its use.
+Project ACL
+============
 
-Thought in a modular system that reminds me of the shirts that are clicked in arduino for extra functions.
+Description
+-----------
 
-We use our application on the LLaMA executable, providing an Api with queue service.
-Linux:
-go build api.go
-./api
+This project, ApiCloudLLaMA, aims to create an API that can be easily consumed by developers in their applications. Similar to the modular concept of click-in shields in Arduino, our goal is to provide an API with open-source models, like GPT4, to democratize their usage.
 
-Windows
-GOOS=windows GOARCH=amd64 go build -o bin/app-amd64.exe app.go
+Installation
+------------
 
-batou@kusanagi: ~/llama.cpp/./api
+1.  Clone the repository to your local machine.
+    
+    ```shell
+    git clone https://github.com/username/repository.git
+    ```
+    
+2.  Navigate to the project directory.
+    
+    ```shell
+    cd project-directory
+    ```
+    
+3.  Compile and run the API by executing the following command:
+    *   For Linux:
+        
+        ```shell
+        go build -o bin/app app.go
+        ./bin/app
+        ```
+        
+    *   For Windows:
+        
+        ```shell
+        set GOOS=windows
+        set GOARCH=amd64
+        go build -o bin/app-amd64.exe app.go
+        bin\app-amd64.exe
+        ```
+        
 
-Browser:
-curl host:8080/llama?phrase="hi"
-curl http://localhost:8080/result?jobID=1684234007692666387
+Usage
+-----
 
+1.  Once the API is running, you can interact with it using an HTTP client like cURL.
+    *   For example, to make a GET request with the phrase "hola" as a parameter, use the following command:
+        
+        ```shell
+        curl host:8080/llama?phrase="hola"
+        ```
+        
+2.  You can check the result of a specific job using its jobID. For example:
+    
+    ```shell
+    curl http://localhost:8080/result?jobID=1684234007692666387
+    ```
+    
 
+Contributing
+------------
+
+Contributions are welcome! To contribute to this project, please follow these steps:
+
+1.  Fork the repository.
+2.  Create a new branch.
+3.  Make your changes and test them.
+4.  Commit your changes.
+5.  Push the branch to your forked repository.
+6.  Open a pull request in the main repository.
+
+License
+-------
