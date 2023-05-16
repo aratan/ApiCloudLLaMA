@@ -1,4 +1,4 @@
-Project ACL
+Project (Api Cloud LLaMA)
 ============
 
 Description
@@ -12,21 +12,21 @@ Installation
 1.  Clone the repository to your local machine.
     
     ```shell
-    git clone https://github.com/username/repository.git
+    git clone https://github.com/aratan/ApiCloudLLaMA.git
     ```
     
 2.  Navigate to the project directory.
     
     ```shell
-    cd project-directory
+    cd ApiCloudLLaMA
     ```
     
 3.  Compile and run the API by executing the following command:
     *   For Linux:
         
         ```shell
-        go build -o bin/app app.go
-        ./bin/app
+        go build -o api api.go
+        ./api
         ```
         
     *   For Windows:
@@ -34,8 +34,8 @@ Installation
         ```shell
         set GOOS=windows
         set GOARCH=amd64
-        go build -o bin/app-amd64.exe app.go
-        bin\app-amd64.exe
+        go build -o app-amd64.exe api.go
+        app-amd64.exe
         ```
         
 
@@ -108,3 +108,5 @@ Unit testing and test automation: Develop a comprehensive set of unit tests to e
 
 License
 -------
+Licencia Pública General GNU v3.0
+Víctor Arbiol Martínez
