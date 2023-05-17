@@ -3,13 +3,16 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	//"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
 	"time"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
 type Result struct {
@@ -18,9 +21,12 @@ type Result struct {
 }
 
 type Job struct {
-	ID        string
-	Phrase    string
-	CreatedAt time.Time
+	ID         string    `json:"id"`
+	Phrase     string    `json:"phrase"`
+	Output     string    `json:"output,omitempty"`
+	CreatedAt  time.Time `json:"created_at"`
+	FinishedAt time.Time `json:"finished_at,omitempty"`
+	Status     string    `json:"status,omitempty"`
 }
 
 type JobManager struct {
@@ -43,165 +49,150 @@ func (jm *JobManager) AddJob(phrase string) *Job {
 		ID:        jobID,
 		Phrase:    phrase,
 		CreatedAt: time.Now(),
+		Status:    "in_progress",
 	}
 	jm.Jobs[jobID] = job
 
 	return job
 }
 
-func (jm *JobManager) GetJob(jobID string) (*Job, bool) {
+func (jm *JobManager) GetJob(jobID string) (*Job, error) {
 	jm.RLock()
 	defer jm.RUnlock()
 
 	job, ok := jm.Jobs[jobID]
-	return job, ok
-}
+	if !ok {
+		return nil, fmt.Errorf("job %s not found", jobID)
+	}
 
-func (jm *JobManager) DeleteJob(jobID string) {
-	jm.Lock()
-	defer jm.Unlock()
-
-	delete(jm.Jobs, jobID)
+	return job, nil
 }
 
 func generateJobID() string {
 	return fmt.Sprintf("%d", time.Now().UnixNano())
 }
 
-func handleJobs(w http.ResponseWriter, r *http.Request) {
-	// Obtener una lista de todos los trabajos en la cola
-	jobManager := NewJobManager()
-	jobs := make([]*Job, 0)
-	jobManager.RLock()
-	for _, job := range jobManager.Jobs {
-		jobs = append(jobs, job)
-	}
-	jobManager.RUnlock()
-
-	// Crear una estructura que contenga los datos a devolver en formato JSON
-	response := struct {
-		Jobs []*Job `json:"jobs"`
-	}{
-		Jobs: jobs,
-	}
-
-	// Codificar la estructura de respuesta en formato JSON
-	jsonResponse, err := json.Marshal(response)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Establecer la cabecera de la respuesta HTTP para indicar que se devuelve JSON
-	w.Header().Set("Content-Type", "application/json")
-
-	// Escribir la respuesta JSON en el cuerpo de la respuesta HTTP
-	w.Write(jsonResponse)
-}
-
-func handleRequest(w http.ResponseWriter, r *http.Request) {
-	// Obtener la frase de la solicitud HTTP
-	phrase := r.FormValue("phrase")
-
-	// Agregar un trabajo a la cola de trabajos
-	jobManager := NewJobManager()
-	job := jobManager.AddJob(phrase)
-
-	// Ejecutar la aplicación de terminal "llama" en segundo plano
-	go func(job *Job) {
-		cmd := exec.Command("./main", "-m", "./WizardLM-7B-uncensored.ggml.q4_0.bin", "-p", job.Phrase, "-n", "512")
-		fmt.Println(cmd)
-		// Obtener la salida de la aplicación
-		output, err := cmd.Output()
-		if err != nil {
-			jobManager.DeleteJob(job.ID)
-			return
-		}
-
-		// Almacenar la salida de la aplicación en un archivo
-		err = ioutil.WriteFile(fmt.Sprintf("%s.txt", job.ID), output, 0644)
-		if err != nil {
-			jobManager.DeleteJob(job.ID)
-			return
-		}
-	}(job)
-
-	// Devolver una respuesta HTTP inmediata con la ID del trabajo
-	result := &Result{Output: job.ID}
-	jsonResult, err := json.Marshal(result)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonResult)
-}
-
-func handleResult(w http.ResponseWriter, r *http.Request) {
-	// Obtener el valor del parámetro jobID de la solicitud HTTP
-	jobID := r.URL.Query().Get("jobID")
-
-	// Comprobar si el archivo jobID.txt existe en el directorio actual
-	_, err := os.Stat(jobID + ".txt")
-	exists := !os.IsNotExist(err)
-
-	// Obtener la dirección IP del cliente que realiza la solicitud HTTP
-	ip := r.RemoteAddr
-
-	// Crear una estructura que contenga los datos a devolver en formato JSON
-	response := struct {
-		JobID  string    `json:"jobID"`
-		Content string   `json:"content,omitempty"`
-		Exists bool      `json:"exists"`
-		Date   time.Time `json:"date"`
-		IP     string    `json:"ip"`
-	}{
-		JobID:  jobID,
-		Exists: exists,
-		Date:   time.Now(),
-		IP:     ip,
-	}
-
-	if exists {
-		// Leer el contenido del archivo jobID.txt
-		content, err := ioutil.ReadFile(fmt.Sprintf("%s.txt", jobID))
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		response.Content = string(content)
-	}
-
-	// Codificar la estructura de respuesta en formato JSON
-	jsonResponse, err := json.Marshal(response)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Establecer la cabecera de la respuesta HTTP para indicar que se devuelve JSON
-	w.Header().Set("Content-Type", "application/json")
-
-	// Escribir la respuesta JSON en el cuerpo de la respuesta HTTP
-	w.Write(jsonResponse)
-}
-
 func main() {
-	fmt.Println("service enabled localhost:8080")
-	fmt.Println("http://localhost:8080/llama?phrase=hola")
-	fmt.Println("http://localhost:8080/result?jobID=1684222811777450241")
-	fmt.Println("http://localhost:8080/jobs")
+	jobManager := NewJobManager()
 
-	// Asociar la función de manejo de solicitudes a la ruta /llama
-	http.HandleFunc("/llama", handleRequest)
+	http.HandleFunc("/job", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			var reqBody struct {
+				Phrase string `json:"phrase"`
+			}
+			if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+				http.Error(w, "bad request", http.StatusBadRequest)
+				return
+			}
 
-	// Asociar la función de manejo de solicitudes a la ruta /result
-	http.HandleFunc("/result", handleResult)
+			// Verify JWT token
+			authHeader := r.Header.Get("Authorization")
+			if authHeader == "" {
+				http.Error(w, "unauthorized", http.StatusUnauthorized)
+				return
+			}
+			tokenString := strings.Replace(authHeader, "Bearer ", "", 1)
+			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+				}
+				return []byte(os.Getenv("JWT_SECRET")), nil
+			})
+			if err != nil || !token.Valid {
+				http.Error(w, "unauthorized", http.StatusUnauthorized)
+				return
+			}
 
-	//ver las colas de trabajo
-	http.HandleFunc("/jobs", handleJobs)
+			// Create job
+			job := jobManager.AddJob(reqBody.Phrase)
 
-	// Iniciar el servidor HTTP en el puerto 8080
-	log.Fatal(http.ListenAndServe(":8080", nil))
+			go func() {
+				//cmd := exec.Command("espeak", "-v", "en-us", "-s", "130", "-p", "50", "-g", "10", job.Phrase)
+				cmd := exec.Command("./main", "-m", "./WizardLM-7B-uncensored.ggml.q4_0.bin", "-p", job.Phrase, "-n", "512", "-s", "42", "-t", "3")
+                out, err := cmd.CombinedOutput()
+
+				job.FinishedAt = time.Now()
+				if err != nil {
+					job.Status = "failed"
+					job.Output = ""
+					log.Printf("error while processing job '%s': %v", job.ID, err)
+				} else {
+					job.Status = "completed"
+					job.Output = string(out)
+					log.Printf("job '%s' completed successfully", job.ID)
+				}
+			}()
+
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]string{"job_id": job.ID})
+
+		case http.MethodGet:
+			jobID := r.URL.Query().Get("job_id")
+			if jobID == "" {
+				http.Error(w, "missing job_id", http.StatusBadRequest)
+				return
+			}
+
+			// Verify JWT token
+			authHeader := r.Header.Get("Authorization")
+			if authHeader == "" {
+				http.Error(w, "unauthorized", http.StatusUnauthorized)
+				return
+			}
+			tokenString := strings.Replace(authHeader, "Bearer ", "", 1)
+			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+				}
+				return []byte(os.Getenv("JWT_SECRET")), nil
+			})
+			if err != nil || !token.Valid {
+				http.Error(w, "unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			job, err := jobManager.GetJob(jobID)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusNotFound)
+				return
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(job)
+
+		default:
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	http.HandleFunc("/token", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			"exp": time.Now().Add(time.Hour).Unix(),
+		})
+		tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+		if err != nil {
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"token": tokenString})
+	})
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	log.Printf("server listening on port %s", port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
+// curl http://localhost:8080/token
+// curl -X POST -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODQzNTMyMDR9.DD63YjCdt2upWJkMCZR2OcbPJEwnHDuhDaxEg-v5IPk" -H "Content-Type: application/json" -d '{"phrase": "Hello, world!"}' http://localhost:8080/job
+// curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODQzNTMyMDR9.DD63YjCdt2upWJkMCZR2OcbPJEwnHDuhDaxEg-v5IPk" http://localhost:8080/job?job_id=1684349700082163228
