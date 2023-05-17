@@ -114,3 +114,13 @@ License
 -------
 Licencia Pública General GNU v3.0
 Víctor Arbiol Martínez
+
+postdata: I need filter
+{
+   "id":"1684359534886646993",
+   "phrase":"Hello, world!",
+   "output":"main: build = 533 (fb62f92)\nmain: seed  = 42\nllama.cpp: loading model from ./WizardLM-7B-uncensored.ggml.q4_0.bin\nllama_model_load_internal: format     = ggjt v2 (latest)\nllama_model_load_internal: n_vocab    = 32001\nllama_model_load_internal: n_ctx      = 512\nllama_model_load_internal: n_embd     = 4096\nllama_model_load_internal: n_mult     = 256\nllama_model_load_internal: n_head     = 32\nllama_model_load_internal: n_layer    = 32\nllama_model_load_internal: n_rot      = 128\nllama_model_load_internal: ftype      = 2 (mostly Q4_0)\nllama_model_load_internal: n_ff       = 11008\nllama_model_load_internal: n_parts    = 1\nllama_model_load_internal: model size = 7B\nllama_model_load_internal: ggml ctx size =  68,20 KB\nllama_model_load_internal: mem required  = 5809,34 MB (+ 1026,00 MB per state)\nllama_init_from_file: kv self size  =  256,00 MB\n\nsystem_info: n_threads = 3 / 4 | AVX = 1 | AVX2 = 0 | AVX512 = 0 | AVX512_VBMI = 0 | AVX512_VNNI = 0 | FMA = 0 | NEON = 0 | ARM_FMA = 0 | F16C = 1 | FP16_VA = 0 | WASM_SIMD = 0 | BLAS = 0 | SSE3 = 1 | VSX = 0 | \nsampling: repeat_last_n = 64, repeat_penalty = 1,100000, presence_penalty = 0,000000, frequency_penalty = 0,000000, top_k = 40, tfs_z = 1,000000, top_p = 0,950000, typical_p = 1,000000, temp = 0,800000, mirostat = 0, mirostat_lr = 0,100000, mirostat_ent = 5,000000\ngenerate: n_ctx = 512, n_batch = 512, n_predict = 512, n_keep = 0\n\n\n Hello, world! I'm so excited to be here. This is my first post on my new blog. I will be sharing my thoughts, ideas, and experiences with you. Thank you for stopping by and supporting me in this new adventure. [end of text]\n\nllama_print_timings:        load time =  4493,72 ms\nllama_print_timings:      sample time =   102,87 ms /    48 runs   (    2,14 ms per token)\nllama_print_timings: prompt eval time =  4184,02 ms /     5 tokens (  836,80 ms per token)\nllama_print_timings:        eval time = 42784,89 ms /    47 runs   (  910,32 ms per token)\nllama_print_timings:       total time = 47398,80 ms\n",
+   "created_at":"2023-05-17T23:38:54.886653598+02:00",
+   "finished_at":"2023-05-17T23:39:42.401900595+02:00",
+   "status":"completed"
+}
