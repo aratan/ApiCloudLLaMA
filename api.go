@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 	"time"
-
+	"regexp"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -111,17 +111,34 @@ func main() {
 				//cmd := exec.Command("espeak", "-v", "en-us", "-s", "130", "-p", "50", "-g", "10", job.Phrase)
 				cmd := exec.Command("./main", "-m", "./WizardLM-7B-uncensored.ggml.q4_0.bin", "-p", job.Phrase, "-n", "512", "-s", "42", "-t", "3")
                 out, err := cmd.CombinedOutput()
+				inicio := job.Phrase
+				fin := "\\[end of text\\]"
 
-				job.FinishedAt = time.Now()
-				if err != nil {
-					job.Status = "failed"
-					job.Output = ""
-					log.Printf("error while processing job '%s': %v", job.ID, err)
+				// Construir el patrón de expresión regular
+				patron := fmt.Sprintf("%s(.*?)%s", inicio, fin)
+				re := regexp.MustCompile(patron)
+
+				// Buscar el contenido entre las dos frases
+				match := re.FindStringSubmatch(string(out))
+
+				if len(match) > 1 {
+					contenido := match[1]
+
+					//fmt.Println(string(out))
+					job.FinishedAt = time.Now()
+					if err != nil {
+						job.Status = "failed"
+						job.Output = contenido
+						log.Printf("error while processing job '%s': %v", job.ID, err)
+					} else {
+						job.Status = "completed"
+						job.Output = contenido
+						log.Printf("job '%s' completed successfully", job.ID)
+					}
 				} else {
-					job.Status = "completed"
-					job.Output = string(out)
-					log.Printf("job '%s' completed successfully", job.ID)
+					fmt.Println("No se encontró contenido entre las frases")
 				}
+
 			}()
 
 			w.Header().Set("Content-Type", "application/json")
