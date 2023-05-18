@@ -49,13 +49,17 @@ Usage
 1.  Once the API is running, you can interact with it using an HTTP client like cURL.
     *   For example, to make a GET request with the phrase "hola" as a parameter, use the following command:
         
-        ```shell
-        curl host:8080/llama?phrase="hola"
-        
-        {
-           "output":"1684253956720900396"
-        } 
-        ```
+
+    
+     ```shell
+     
+     curl http://localhost:8080/token
+     
+     curl -X POST -H "Authorization: Bearer <token>" -H "Content-Type: application/json" -d '{"phrase": "Hello, world!"}' http://localhost:8080/job
+     
+     curl -H "Authorization: Bearer <token>" http://localhost:8080/job?job_id=<job_id>
+     
+     ```
         
 2.  You can check the result of a specific job using its jobID. For example:
     
