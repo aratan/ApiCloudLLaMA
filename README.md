@@ -74,7 +74,10 @@ Usage
       "ip":"192.168.1.42:33638"
     }
     ```
-    
+3. Docker:
+    https://hub.docker.com/repository/docker/systemdeveloper868/apicloudllama/    
+    docker run apicloudllama
+
 
 Contributing
 ------------
