@@ -55,7 +55,7 @@ Usage
      
      curl http://localhost:8080/token
      
-     curl -X POST -H "Authorization: Bearer <token>" -H "Content-Type: application/json" -d '{"phrase": "Hello, world!"}' http://localhost:8080/job
+     curl -X POST -H "Authorization: Bearer <token>" -H "Content-Type: application/json" -d '''{"phrase": "Hola amigo"}''' http://localhost:8080/job
      
      curl -H "Authorization: Bearer <token>" http://localhost:8080/job?job_id=<job_id>
      
